@@ -1,0 +1,26 @@
+[
+  {
+    "event_id": "evt-001",
+    "name": "City Jazz Festival",
+    "venue": "Marienplatz",
+    "start_time": "18:00",
+    "distance_km": 0.3,
+    "category": "music"
+  },
+  {
+    "event_id": "evt-002",
+    "name": "Farmers Market",
+    "venue": "Viktualienmarkt",
+    "start_time": "08:00",
+    "distance_km": 0.8,
+    "category": "market"
+  },
+  {
+    "event_id": "evt-003",
+    "name": "FC Bayern vs Dortmund",
+    "venue": "Allianz Arena",
+    "start_time": "15:30",
+    "distance_km": 9.2,
+    "category": "sports"
+  }
+]

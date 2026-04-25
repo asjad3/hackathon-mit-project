@@ -1,0 +1,50 @@
+[
+  {
+    "merchant_id": "cafe-luna",
+    "name": "Café Luna",
+    "category": "cafe",
+    "address": "Sendlinger Str. 12, Munich",
+    "lat": 48.1351,
+    "lng": 11.5761,
+    "zone_id": "zone-altstadt",
+    "rules": {
+      "max_discount_pct": 20,
+      "goal": "fill_quiet_hours",
+      "quiet_hours": ["14:00-17:00"],
+      "budget_daily_eur": 50,
+      "product_categories": ["coffee", "pastries"]
+    }
+  },
+  {
+    "merchant_id": "pizza-roma",
+    "name": "Pizza Roma",
+    "category": "restaurant",
+    "address": "Theatinerstr. 8, Munich",
+    "lat": 48.1395,
+    "lng": 11.5770,
+    "zone_id": "zone-altstadt",
+    "rules": {
+      "max_discount_pct": 15,
+      "goal": "increase_lunch_traffic",
+      "quiet_hours": ["14:00-16:00"],
+      "budget_daily_eur": 80,
+      "product_categories": ["pizza", "pasta", "drinks"]
+    }
+  },
+  {
+    "merchant_id": "bookstore-page1",
+    "name": "Page One Books",
+    "category": "retail",
+    "address": "Residenzstr. 3, Munich",
+    "lat": 48.1405,
+    "lng": 11.5790,
+    "zone_id": "zone-altstadt",
+    "rules": {
+      "max_discount_pct": 10,
+      "goal": "rainy_day_traffic",
+      "quiet_hours": [],
+      "budget_daily_eur": 30,
+      "product_categories": ["books", "stationery"]
+    }
+  }
+]

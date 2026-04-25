@@ -1,0 +1,18 @@
+[
+  {
+    "zone_id": "zone-altstadt",
+    "name": "Altstadt",
+    "lat": 48.1371,
+    "lng": 11.5754,
+    "radius_m": 800,
+    "merchant_ids": ["cafe-luna", "pizza-roma", "bookstore-page1"]
+  },
+  {
+    "zone_id": "zone-schwabing",
+    "name": "Schwabing",
+    "lat": 48.1619,
+    "lng": 11.5860,
+    "radius_m": 1000,
+    "merchant_ids": []
+  }
+]
