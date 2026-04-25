@@ -32,6 +32,7 @@ API docs available at `http://localhost:8000/docs`
 | Context | `/api/context` | GET | Full context snapshot (weather, time, events, demand) |
 | Context | `/api/context/weather` | GET | Weather data for a city |
 | Context | `/api/context/events` | GET | Nearby events |
+| Context | `/api/context/pois` | GET | Nearby OSM/local points of interest |
 | Context | `/api/context/demand/{id}` | GET | Merchant transaction density |
 | Offers | `/api/offers/generate` | POST | Generate a dynamic offer |
 | Offers | `/api/offers/{id}` | GET | Get a generated offer |
@@ -50,5 +51,16 @@ See [PLAN.md](./PLAN.md) for the full architecture and module breakdown.
 
 - **Backend:** Python 3.11+ / FastAPI
 - **LLM:** Claude API (offer generation)
+- **Context APIs:** OpenWeatherMap, Tavily events search, OSM Overpass POIs
 - **Frontend:** React / React Native (planned)
 - **Merchant Dashboard:** Next.js (planned)
+
+### Context Handoff
+
+The backend context aggregator is the handoff point for offer generation:
+
+```bash
+GET /api/context?lat=48.1351&lng=11.5761&city=Munich
+```
+
+It returns weather, time bucket, matched zone, local events, nearby POIs, and simulated Payone-style merchant demand. OpenWeatherMap, Tavily, and OSM are used when available; local fallbacks keep the demo stable without API keys.

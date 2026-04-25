@@ -7,3 +7,4 @@ httpx
 qrcode[pil]
 anthropic
 python-multipart
+tzdata

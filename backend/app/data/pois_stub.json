@@ -1,0 +1,30 @@
+[
+  {
+    "poi_id": "poi-cafe-luna",
+    "name": "Café Luna",
+    "category": "cafe",
+    "lat": 48.1351,
+    "lng": 11.5761
+  },
+  {
+    "poi_id": "poi-pizza-roma",
+    "name": "Pizza Roma",
+    "category": "restaurant",
+    "lat": 48.1395,
+    "lng": 11.577
+  },
+  {
+    "poi_id": "poi-viktualienmarkt",
+    "name": "Viktualienmarkt",
+    "category": "market",
+    "lat": 48.1351,
+    "lng": 11.5764
+  },
+  {
+    "poi_id": "poi-page-one",
+    "name": "Page One Books",
+    "category": "bookstore",
+    "lat": 48.1405,
+    "lng": 11.579
+  }
+]

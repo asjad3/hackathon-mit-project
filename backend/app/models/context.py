@@ -1,5 +1,6 @@
-from pydantic import BaseModel
 from enum import Enum
+
+from pydantic import BaseModel, Field
 
 
 class TimeBucket(str, Enum):
@@ -29,6 +30,7 @@ class WeatherContext(BaseModel):
     feels_like_c: float = 0.0
     humidity: int = 0
     city: str = ""
+    source: str = "stub"
 
 
 class LocationZone(BaseModel):
@@ -37,7 +39,8 @@ class LocationZone(BaseModel):
     lat: float
     lng: float
     radius_m: float = 500.0
-    merchant_ids: list[str] = []
+    distance_m: float = 0.0
+    merchant_ids: list[str] = Field(default_factory=list)
 
 
 class EventInfo(BaseModel):
@@ -47,6 +50,18 @@ class EventInfo(BaseModel):
     start_time: str = ""
     distance_km: float = 0.0
     category: str = ""
+    source: str = "stub"
+    url: str = ""
+
+
+class POIInfo(BaseModel):
+    poi_id: str
+    name: str
+    category: str = ""
+    distance_km: float = 0.0
+    lat: float = 0.0
+    lng: float = 0.0
+    source: str = "stub"
 
 
 class DemandLevel(str, Enum):
@@ -71,5 +86,6 @@ class ContextState(BaseModel):
     day_of_week: str = ""
     local_time: str = ""
     zone: LocationZone | None = None
-    events: list[EventInfo] = []
-    demand: list[MerchantDemand] = []
+    events: list[EventInfo] = Field(default_factory=list)
+    pois: list[POIInfo] = Field(default_factory=list)
+    demand: list[MerchantDemand] = Field(default_factory=list)

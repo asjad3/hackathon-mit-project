@@ -2,10 +2,11 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from app.config import get_settings
-from app.models.context import ContextState, TimeBucket, LocationZone
+from app.models.context import ContextState, TimeBucket
 from app.services.weather import get_weather
 from app.services.events import get_nearby_events
 from app.services.demand import get_zone_demand
+from app.services.location import find_zone, get_nearby_pois
 
 
 def _get_time_bucket(hour: int) -> TimeBucket:
@@ -22,39 +23,32 @@ def _get_time_bucket(hour: int) -> TimeBucket:
     return TimeBucket.NIGHT
 
 
-def _find_zone(lat: float, lng: float) -> LocationZone | None:
-    """Match lat/lng to a predefined zone. Stub for MVP."""
-    # TODO: load from data/zones.json and do radius matching
-    return LocationZone(
-        zone_id="zone-altstadt",
-        name="Altstadt",
-        lat=48.1371,
-        lng=11.5754,
-        radius_m=800,
-        merchant_ids=["cafe-luna", "pizza-roma", "bookstore-page1"],
-    )
-
-
-async def assemble_context(lat: float, lng: float) -> ContextState:
+async def assemble_context(
+    lat: float, lng: float, city: str | None = None, radius_km: float = 5.0
+) -> ContextState:
     """Build the full context state from all signal sources."""
     settings = get_settings()
     tz = ZoneInfo(settings.default_timezone)
     now = datetime.now(tz)
+    city = city or settings.default_city
+    time_bucket = _get_time_bucket(now.hour)
 
-    weather = await get_weather()
-    zone = _find_zone(lat, lng)
-    events = await get_nearby_events(lat, lng)
+    weather = await get_weather(city=city, lat=lat, lng=lng)
+    zone = find_zone(lat, lng)
+    events = await get_nearby_events(lat, lng, radius_km=radius_km, city=city)
+    pois = await get_nearby_pois(lat, lng)
 
     demand = []
     if zone:
-        demand = await get_zone_demand(zone.merchant_ids)
+        demand = await get_zone_demand(zone.merchant_ids, time_bucket)
 
     return ContextState(
         weather=weather,
-        time_bucket=_get_time_bucket(now.hour),
+        time_bucket=time_bucket,
         day_of_week=now.strftime("%A").lower(),
         local_time=now.strftime("%H:%M"),
         zone=zone,
         events=events,
+        pois=pois,
         demand=demand,
     )

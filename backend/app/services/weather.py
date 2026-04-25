@@ -18,8 +18,10 @@ def _map_condition(owm_main: str) -> WeatherCondition:
     return mapping.get(owm_main, WeatherCondition.OTHER)
 
 
-async def get_weather(city: str | None = None) -> WeatherContext:
-    """Fetch current weather from OpenWeatherMap API."""
+async def get_weather(
+    city: str | None = None, lat: float | None = None, lng: float | None = None
+) -> WeatherContext:
+    """Fetch current weather from OpenWeatherMap API, with a demo-safe fallback."""
     settings = get_settings()
     city = city or settings.default_city
     api_key = settings.openweather_api_key
@@ -28,12 +30,19 @@ async def get_weather(city: str | None = None) -> WeatherContext:
         return _stub_weather(city)
 
     url = "https://api.openweathermap.org/data/2.5/weather"
-    params = {"q": city, "appid": api_key, "units": "metric"}
+    params = {"appid": api_key, "units": "metric"}
+    if lat is not None and lng is not None:
+        params.update({"lat": lat, "lon": lng})
+    else:
+        params["q"] = city
 
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(url, params=params)
-        resp.raise_for_status()
-        data = resp.json()
+    try:
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            resp = await client.get(url, params=params)
+            resp.raise_for_status()
+            data = resp.json()
+    except httpx.HTTPError:
+        return _stub_weather(city)
 
     weather_main = data["weather"][0]["main"]
     return WeatherContext(
@@ -42,17 +51,19 @@ async def get_weather(city: str | None = None) -> WeatherContext:
         temp_c=data["main"]["temp"],
         feels_like_c=data["main"].get("feels_like", 0),
         humidity=data["main"].get("humidity", 0),
-        city=city,
+        city=data.get("name") or city,
+        source="openweathermap",
     )
 
 
 def _stub_weather(city: str) -> WeatherContext:
     """Fallback stub when no API key is configured."""
     return WeatherContext(
-        condition=WeatherCondition.RAIN,
-        description="light rain (stub)",
-        temp_c=12.0,
-        feels_like_c=10.0,
+        condition=WeatherCondition.CLOUDS,
+        description="overcast and slightly cold (demo fallback)",
+        temp_c=11.0,
+        feels_like_c=9.5,
         humidity=78,
         city=city,
+        source="stub",
     )
