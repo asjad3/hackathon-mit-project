@@ -1,10 +1,13 @@
 import json
+import logging
 from pathlib import Path
 
 import httpx
 
 from app.config import get_settings
 from app.models.context import EventInfo
+
+logger = logging.getLogger(__name__)
 
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
@@ -17,6 +20,7 @@ async def get_nearby_events(
     """Fetch nearby events via Tavily search, falling back to local demo data."""
     settings = get_settings()
     city = city or settings.default_city
+    radius_km = max(0.1, min(radius_km, 25.0))
 
     if settings.tavily_api_key:
         events = await _tavily_events(city, lat, lng, radius_km)
@@ -48,6 +52,10 @@ async def _tavily_events(
             resp.raise_for_status()
             data = resp.json()
     except httpx.HTTPError:
+        logger.exception("Tavily events request failed; using stub events")
+        return []
+    except ValueError:
+        logger.exception("Tavily events response was not valid JSON")
         return []
 
     events: list[EventInfo] = []

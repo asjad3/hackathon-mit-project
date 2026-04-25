@@ -11,26 +11,26 @@ from app.models.offer import GeneratedOffer, OfferVisuals
 async def generate_offer(
     context: ContextState, merchant: Merchant
 ) -> GeneratedOffer:
-    """Generate a dynamic offer using LLM based on context + merchant rules.
-
-    TODO: Wire up Anthropic Claude API call. For now returns a stub offer.
-    """
+    """Build the server-side offer contract for mobile-local model copy."""
     settings = get_settings()
     tz = ZoneInfo(settings.default_timezone)
     now = datetime.now(tz)
 
     offer_id = f"offer-{uuid.uuid4().hex[:8]}"
+    valid_minutes = 30
 
-    # Stub: in Phase 3 this will call the LLM
     return GeneratedOffer(
         offer_id=offer_id,
         merchant_id=merchant.merchant_id,
         merchant_name=merchant.name,
-        headline=f"Rainy day comfort at {merchant.name}",
-        body="Warm up with a cozy drink — we saved a spot just for you.",
+        headline=f"Local offer at {merchant.name}",
+        body=(
+            "Use the mobile on-device model to personalize this offer from "
+            "the returned context and merchant rules."
+        ),
         discount_pct=min(15.0, merchant.rules.max_discount_pct),
         discount_text="15% off any hot drink",
-        valid_minutes=30,
+        valid_minutes=valid_minutes,
         product_category=merchant.rules.product_categories[0]
         if merchant.rules.product_categories
         else "general",
@@ -41,5 +41,5 @@ async def generate_offer(
             mood="warm",
         ),
         created_at=now.isoformat(),
-        expires_at=(now + timedelta(minutes=30)).isoformat(),
+        expires_at=(now + timedelta(minutes=valid_minutes)).isoformat(),
     )

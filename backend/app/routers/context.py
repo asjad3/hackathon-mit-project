@@ -13,10 +13,10 @@ router = APIRouter(prefix="/api/context", tags=["context"])
 
 @router.get("", response_model=ContextState)
 async def get_full_context(
-    lat: float = Query(default=None),
-    lng: float = Query(default=None),
+    lat: float | None = Query(default=None, ge=-90, le=90),
+    lng: float | None = Query(default=None, ge=-180, le=180),
     city: str = Query(default=None),
-    radius_km: float = Query(default=5.0),
+    radius_km: float = Query(default=5.0, gt=0, le=25),
 ):
     settings = get_settings()
     lat = lat if lat is not None else settings.default_lat
@@ -27,17 +27,17 @@ async def get_full_context(
 @router.get("/weather", response_model=WeatherContext)
 async def get_weather_context(
     city: str = Query(default=None),
-    lat: float = Query(default=None),
-    lng: float = Query(default=None),
+    lat: float | None = Query(default=None, ge=-90, le=90),
+    lng: float | None = Query(default=None, ge=-180, le=180),
 ):
     return await get_weather(city=city, lat=lat, lng=lng)
 
 
 @router.get("/events", response_model=list[EventInfo])
 async def get_events(
-    lat: float = Query(default=None),
-    lng: float = Query(default=None),
-    radius_km: float = Query(default=5.0),
+    lat: float | None = Query(default=None, ge=-90, le=90),
+    lng: float | None = Query(default=None, ge=-180, le=180),
+    radius_km: float = Query(default=5.0, gt=0, le=25),
     city: str = Query(default=None),
 ):
     settings = get_settings()
@@ -48,9 +48,9 @@ async def get_events(
 
 @router.get("/pois", response_model=list[POIInfo])
 async def get_pois(
-    lat: float = Query(default=None),
-    lng: float = Query(default=None),
-    radius_m: int = Query(default=600),
+    lat: float | None = Query(default=None, ge=-90, le=90),
+    lng: float | None = Query(default=None, ge=-180, le=180),
+    radius_m: int = Query(default=600, gt=0, le=5000),
 ):
     settings = get_settings()
     lat = lat if lat is not None else settings.default_lat

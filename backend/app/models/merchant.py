@@ -1,12 +1,12 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class MerchantRules(BaseModel):
     max_discount_pct: float = 20.0
     goal: str = "fill_quiet_hours"
-    quiet_hours: list[str] = []
+    quiet_hours: list[str] = Field(default_factory=list)
     budget_daily_eur: float = 50.0
-    product_categories: list[str] = []
+    product_categories: list[str] = Field(default_factory=list)
     min_order_eur: float = 0.0
 
 
@@ -18,7 +18,7 @@ class Merchant(BaseModel):
     lat: float = 0.0
     lng: float = 0.0
     zone_id: str = ""
-    rules: MerchantRules = MerchantRules()
+    rules: MerchantRules = Field(default_factory=MerchantRules)
     active: bool = True
 
 

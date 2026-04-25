@@ -16,6 +16,7 @@ class RedemptionToken(BaseModel):
     qr_data: str = ""
     status: TokenStatus = TokenStatus.ACTIVE
     created_at: str = ""
+    expires_at: str = ""
     redeemed_at: str | None = None
     discount_pct: float = 0.0
     discount_eur: float = 0.0

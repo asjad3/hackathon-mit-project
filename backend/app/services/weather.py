@@ -1,6 +1,10 @@
+import logging
+
 import httpx
 from app.models.context import WeatherContext, WeatherCondition
 from app.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 
 def _map_condition(owm_main: str) -> WeatherCondition:
@@ -42,18 +46,25 @@ async def get_weather(
             resp.raise_for_status()
             data = resp.json()
     except httpx.HTTPError:
+        logger.exception("OpenWeatherMap request failed; using stub weather")
         return _stub_weather(city)
 
-    weather_main = data["weather"][0]["main"]
-    return WeatherContext(
-        condition=_map_condition(weather_main),
-        description=data["weather"][0].get("description", ""),
-        temp_c=data["main"]["temp"],
-        feels_like_c=data["main"].get("feels_like", 0),
-        humidity=data["main"].get("humidity", 0),
-        city=data.get("name") or city,
-        source="openweathermap",
-    )
+    try:
+        weather = data["weather"][0]
+        weather_main = weather["main"]
+        main = data["main"]
+        return WeatherContext(
+            condition=_map_condition(weather_main),
+            description=weather.get("description", ""),
+            temp_c=main["temp"],
+            feels_like_c=main.get("feels_like", 0),
+            humidity=main.get("humidity", 0),
+            city=data.get("name") or city,
+            source="openweathermap",
+        )
+    except (KeyError, IndexError, TypeError):
+        logger.exception("OpenWeatherMap response had an unexpected shape")
+        return _stub_weather(city)
 
 
 def _stub_weather(city: str) -> WeatherContext:

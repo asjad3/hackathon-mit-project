@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from enum import Enum
 
 
@@ -29,7 +29,7 @@ class GeneratedOffer(BaseModel):
     discount_text: str = ""
     valid_minutes: int = 30
     product_category: str = ""
-    visuals: OfferVisuals = OfferVisuals()
+    visuals: OfferVisuals = Field(default_factory=OfferVisuals)
     status: OfferStatus = OfferStatus.GENERATED
     created_at: str = ""
     expires_at: str = ""

@@ -1,4 +1,5 @@
 import json
+import logging
 import math
 from pathlib import Path
 
@@ -6,6 +7,8 @@ import httpx
 
 from app.config import get_settings
 from app.models.context import LocationZone, POIInfo
+
+logger = logging.getLogger(__name__)
 
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
@@ -47,6 +50,7 @@ async def get_nearby_pois(
     lat: float, lng: float, radius_m: int = 600, category: str = "cafe"
 ) -> list[POIInfo]:
     """Fetch nearby POIs from OSM Overpass, falling back to local demo data."""
+    radius_m = max(1, min(radius_m, 5000))
     pois = await _overpass_pois(lat, lng, radius_m, category)
     if pois:
         return pois
@@ -81,6 +85,10 @@ async def _overpass_pois(
             resp.raise_for_status()
             data = resp.json()
     except httpx.HTTPError:
+        logger.exception("Overpass POI request failed; using stub POIs")
+        return []
+    except ValueError:
+        logger.exception("Overpass POI response was not valid JSON")
         return []
 
     pois: list[POIInfo] = []
@@ -126,4 +134,5 @@ def _load_json(path: Path) -> list[dict]:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
+        logger.exception("Failed to load JSON data file: %s", path)
         return []
