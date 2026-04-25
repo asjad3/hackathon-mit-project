@@ -14,22 +14,34 @@ _offers: dict[str, GeneratedOffer] = {}
 async def generate_new_offer(req: OfferRequest):
     context = await assemble_context(req.lat, req.lng)
 
-    # Pick the best merchant (stub: first with low demand)
+    if not context.zone:
+        raise HTTPException(
+            status_code=404,
+            detail="No supported merchant zone found for this location",
+        )
+
+    zone_merchants = [
+        _merchants[merchant_id]
+        for merchant_id in context.zone.merchant_ids
+        if merchant_id in _merchants and _merchants[merchant_id].active
+    ]
+    if not zone_merchants:
+        raise HTTPException(
+            status_code=404,
+            detail="No active merchants available in this zone",
+        )
+
+    # Pick the best local merchant (stub: first with low demand, then any active zone merchant).
     target_merchant = None
     for demand in context.demand:
         if demand.level.value in ("very_low", "low"):
             merchant = _merchants.get(demand.merchant_id)
-            if merchant and merchant.active:
+            if merchant in zone_merchants:
                 target_merchant = merchant
                 break
 
     if not target_merchant:
-        target_merchant = next(
-            (m for m in _merchants.values() if m.active), None
-        )
-
-    if not target_merchant:
-        raise HTTPException(status_code=404, detail="No active merchants in zone")
+        target_merchant = zone_merchants[0]
 
     offer = await generate_offer(context, target_merchant)
     _offers[offer.offer_id] = offer
