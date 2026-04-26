@@ -24,7 +24,7 @@ export async function initNativeSLM(): Promise<void> {
   const hasModel = await checkModelExists();
   if (!hasModel) {
     throw new Error(
-      'Native SLM model not found. Please ensure Phi-3-mini-4k-instruct-Q4_K_M.gguf ' +
+      'Native SLM model not found. Please ensure qwen2.5-0.5b-instruct-q4_k_m.gguf ' +
       'is placed in assets/models/ directory.'
     );
   }

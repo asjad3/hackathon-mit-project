@@ -155,7 +155,7 @@ export default function App() {
           ))}
         </View>
         <Text style={styles.muted}>
-          mock = heuristics (works everywhere). native = Phi-3 Mini via llama.rn (requires model file).
+          mock = heuristics (works everywhere). native = Qwen2.5-0.5B via llama.rn (requires model file).
         </Text>
         {slm === "native" && nativeInitStatus && (
           <Text style={[styles.muted, { color: nativeInitStatus.startsWith("Failed") ? "#f87171" : "#94a3b8" }]}>
