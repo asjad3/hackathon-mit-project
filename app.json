@@ -9,7 +9,9 @@
     "splash": {
       "backgroundColor": "#0b1220"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.citywallet.local"
@@ -17,5 +19,8 @@
     "android": {
       "package": "com.citywallet.local"
     },
+    "plugins": [
+      "expo-asset"
+    ]
   }
 }

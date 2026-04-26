@@ -175,7 +175,7 @@ def test_finalized_offer_can_enter_redemption_flow(client):
     assert validate_response.json()["offer_headline"] == offer["headline"]
 
 
-def test_accept_validate_history_and_dashboard(client):
+def test_accept_validate_history_and_dashboard(client, db_session):
     # Update rules with min_order_eur on the merchant the offer engine is likely to pick
     # (pizza-roma is picked due to low demand; hedge by updating both)
     for mid in ("cafe-luna", "pizza-roma"):

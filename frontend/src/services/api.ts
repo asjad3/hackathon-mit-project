@@ -1,6 +1,18 @@
 import { Platform } from 'react-native';
 
-const DEV_HOST = Platform.OS === 'android' ? '10.0.2.2' : '127.0.0.1';
+/**
+ * Resolve the backend host depending on the runtime platform:
+ *  - Android emulator routes 10.0.2.2 to host loopback
+ *  - iOS simulator can reach host via 127.0.0.1
+ *  - Web (Expo web / browser) uses localhost directly
+ */
+function resolveHost(): string {
+  if (Platform.OS === 'web') return 'localhost';
+  if (Platform.OS === 'android') return '10.0.2.2';
+  return '127.0.0.1';
+}
+
+const DEV_HOST = resolveHost();
 const API_BASE = `http://${DEV_HOST}:8000`;
 
 export interface WeatherContext {
