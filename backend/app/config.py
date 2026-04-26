@@ -6,7 +6,10 @@ class Settings(BaseSettings):
     app_name: str = "City Wallet"
     debug: bool = False
     app_api_key: str = ""
-    cors_allowed_origins: str = "http://localhost:3000,http://localhost:5173,http://localhost:8080"
+    cors_allowed_origins: str = (
+        "http://localhost:3000,http://localhost:5173,http://localhost:8080,"
+        "http://localhost:8081,http://127.0.0.1:8081,http://localhost:19006"
+    )
 
     openweather_api_key: str = ""
     tavily_api_key: str = ""

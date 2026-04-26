@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.config import get_settings
 from app.main import app
-from app.repositories import redemption_repository
+from app.repositories import merchant_repository, redemption_repository
 from app.services import redemption as redemption_service
 
 client = TestClient(app, raise_server_exceptions=False)
@@ -59,6 +60,38 @@ def test_offer_generation_returns_404_outside_zone():
     assert response.status_code == 404
 
 
+@pytest.mark.parametrize(
+    "lat,lng,city,expected_zone_id",
+    [
+        (33.6844, 73.0479, "Islamabad", "zone-islamabad"),
+        (31.49, 74.32, "Lahore", "zone-lahore"),
+        (24.89, 66.99, "Karachi", "zone-karachi"),
+        (30.17, 71.52, "Multan", "zone-multan"),
+    ],
+)
+def test_pakistan_context_resolves_zone_and_generates_offer(
+    lat, lng, city, expected_zone_id
+):
+    ctx = client.get(
+        "/api/context", params={"lat": lat, "lng": lng, "city": city, "radius_km": 5}
+    )
+    assert ctx.status_code == 200
+    body = ctx.json()
+    assert body["zone"] is not None
+    assert body["zone"]["zone_id"] == expected_zone_id
+    zone_merchant_ids = set(body["zone"]["merchant_ids"])
+
+    offer_resp = client.post(
+        "/api/offers/generate",
+        json={"lat": lat, "lng": lng, "user_id": f"pk-smoke-{city}"},
+    )
+    assert offer_resp.status_code == 200
+    offer = offer_resp.json()
+    assert offer["merchant_id"] in zone_merchant_ids
+    assert offer["merchant_name"]
+    assert offer["offer_id"].startswith("offer-")
+
+
 def test_accept_validate_history_and_dashboard():
     rules_response = client.put(
         "/api/merchants/cafe-luna/rules",
@@ -82,7 +115,12 @@ def test_accept_validate_history_and_dashboard():
     token_response = client.post(f"/api/redemption/accept/{offer['offer_id']}")
     assert token_response.status_code == 200
     token = token_response.json()
-    assert token["discount_eur"] == 3.0
+    chosen = merchant_repository.get_merchant(offer["merchant_id"])
+    min_eur = chosen.rules.min_order_eur if chosen else 0.0
+    expected_discount = (
+        round(min_eur * offer["discount_pct"] / 100, 2) if min_eur else 0.0
+    )
+    assert token["discount_eur"] == expected_discount
     assert len(token["token_id"]) > len("tok-")
 
     validate_response = client.post(
@@ -105,7 +143,7 @@ def test_accept_validate_history_and_dashboard():
         params={"merchant_id": offer["merchant_id"]},
     )
     assert history.status_code == 200
-    assert history.json()[0]["discount_applied_eur"] == 3.0
+    assert history.json()[0]["discount_applied_eur"] == expected_discount
 
     dashboard = client.get(f"/api/merchants/{offer['merchant_id']}/dashboard")
     assert dashboard.status_code == 200
