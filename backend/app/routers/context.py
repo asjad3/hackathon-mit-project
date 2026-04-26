@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends
+from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.models.context import ContextState, WeatherContext, EventInfo, MerchantDemand, POIInfo
@@ -7,6 +8,7 @@ from app.services.weather import get_weather
 from app.services.events import get_nearby_events
 from app.services.demand import get_merchant_demand
 from app.services.location import get_nearby_pois
+from app.dependencies import get_db_session
 
 router = APIRouter(prefix="/api/context", tags=["context"])
 
@@ -17,6 +19,7 @@ async def get_full_context(
     lng: float | None = Query(default=None, ge=-180, le=180),
     city: str = Query(default=None),
     radius_km: float = Query(default=5.0, gt=0, le=25),
+    db: Session = Depends(get_db_session),
 ):
     settings = get_settings()
     lat = lat if lat is not None else settings.default_lat
@@ -59,5 +62,5 @@ async def get_pois(
 
 
 @router.get("/demand/{merchant_id}", response_model=MerchantDemand)
-async def get_demand(merchant_id: str):
+async def get_demand(merchant_id: str, db: Session = Depends(get_db_session)):
     return await get_merchant_demand(merchant_id)

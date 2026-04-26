@@ -1,49 +1,84 @@
-import json
 import logging
-from pathlib import Path
+from sqlalchemy.orm import Session
 
 from app.models.merchant import Merchant, MerchantRules
+from app.database.models import Merchant as MerchantModel
 
 logger = logging.getLogger(__name__)
 
-DATA_DIR = Path(__file__).resolve().parents[1] / "data"
-MERCHANTS_FILE = DATA_DIR / "merchants.json"
+
+def list_merchants(db: Session) -> list[Merchant]:
+    """List all merchants from database."""
+    merchants = db.query(MerchantModel).all()
+    return [
+        Merchant(
+            merchant_id=m.merchant_id,
+            name=m.name,
+            category=m.category,
+            address=m.address,
+            lat=m.lat,
+            lng=m.lng,
+            zone_id=m.zone_id,
+            active=m.active,
+            rules=MerchantRules(
+                max_discount_pct=m.max_discount_pct,
+                goal=m.goal,
+                quiet_hours=m.quiet_hours,
+                budget_daily_eur=m.budget_daily_eur,
+                product_categories=m.product_categories,
+                min_order_eur=m.min_order_eur,
+            ),
+        )
+        for m in merchants
+    ]
 
 
-def _load_seed_merchants() -> dict[str, Merchant]:
-    try:
-        raw_merchants = json.loads(MERCHANTS_FILE.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        logger.exception("Failed to load merchant seed data")
-        return {}
+def get_merchant(db: Session, merchant_id: str) -> Merchant | None:
+    """Get a merchant by ID."""
+    merchant = db.query(MerchantModel).filter(MerchantModel.merchant_id == merchant_id).first()
+    if not merchant:
+        return None
+    
+    return Merchant(
+        merchant_id=merchant.merchant_id,
+        name=merchant.name,
+        category=merchant.category,
+        address=merchant.address,
+        lat=merchant.lat,
+        lng=merchant.lng,
+        zone_id=merchant.zone_id,
+        active=merchant.active,
+        rules=MerchantRules(
+            max_discount_pct=merchant.max_discount_pct,
+            goal=merchant.goal,
+            quiet_hours=merchant.quiet_hours,
+            budget_daily_eur=merchant.budget_daily_eur,
+            product_categories=merchant.product_categories,
+            min_order_eur=merchant.min_order_eur,
+        ),
+    )
 
-    merchants: dict[str, Merchant] = {}
-    for raw_merchant in raw_merchants:
-        merchant = Merchant(**raw_merchant)
-        merchants[merchant.merchant_id] = merchant
-    return merchants
 
-
-_merchants: dict[str, Merchant] = _load_seed_merchants()
-
-
-def list_merchants() -> list[Merchant]:
-    return list(_merchants.values())
-
-
-def get_merchant(merchant_id: str) -> Merchant | None:
-    return _merchants.get(merchant_id)
-
-
-def update_merchant_rules(merchant_id: str, rules: MerchantRules) -> Merchant | None:
-    merchant = _merchants.get(merchant_id)
+def update_merchant_rules(db: Session, merchant_id: str, rules: MerchantRules) -> Merchant | None:
+    """Update merchant rules."""
+    merchant = db.query(MerchantModel).filter(MerchantModel.merchant_id == merchant_id).first()
     if not merchant:
         return None
 
-    merchant.rules = rules
-    return merchant
+    merchant.max_discount_pct = rules.max_discount_pct
+    merchant.goal = rules.goal
+    merchant.quiet_hours = rules.quiet_hours
+    merchant.budget_daily_eur = rules.budget_daily_eur
+    merchant.product_categories = rules.product_categories
+    merchant.min_order_eur = rules.min_order_eur
+    
+    db.commit()
+    db.refresh(merchant)
+    
+    return get_merchant(db, merchant_id)
 
 
-def reset_merchants() -> None:
-    _merchants.clear()
-    _merchants.update(_load_seed_merchants())
+def reset_merchants(db: Session) -> None:
+    """Reset merchants (for testing)."""
+    db.query(MerchantModel).delete()
+    db.commit()

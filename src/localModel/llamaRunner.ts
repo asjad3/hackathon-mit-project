@@ -1,66 +1,110 @@
-/**
- * llamaRunner.ts
- * Loads Phi-3 Mini GGUF via llama.rn and attaches it to the native SLM bridge.
- * Call initLlamaRunner() once at app startup (e.g. in App.tsx before first inference).
- *
- * Model file required (not in repo — see README):
- *   assets/models/Phi-3-mini-4k-instruct-Q4_K_M.gguf
- */
+import { LlamaContext, loadLlamaModel } from 'llama.rn';
+import { getModelPath } from './modelConfig';
 
-import { initLlama, LlamaContext } from "llama.rn";
-import { Asset } from "expo-asset";
+export class LlamaRunner {
+  private context: LlamaContext | null = null;
+  private modelPath: string;
 
-type MaybeGlobalWithBridge = typeof globalThis & {
-  __CITY_WALLET_NATIVE_SLM__?: {
-    infer: (prompt: string) => Promise<string>;
-  };
-};
+  constructor(modelPath: string) {
+    this.modelPath = modelPath;
+  }
 
-let _ctx: LlamaContext | null = null;
-
-/**
- * Load the model once and attach to the global bridge.
- * Safe to call multiple times — skips if already loaded.
- */
-export async function initLlamaRunner(): Promise<void> {
-  if (_ctx) return;
-
-  // Resolve bundled asset path (Expo manages the URI)
-  const [asset] = await Asset.loadAsync(
-    require("../../assets/models/Phi-3-mini-4k-instruct-Q4_K_M.gguf")
-  );
-  const modelUri = asset.localUri ?? asset.uri;
-  if (!modelUri) throw new Error("Model asset URI is null — check assets/models/ path.");
-
-  _ctx = await initLlama({
-    model: modelUri,
-    use_mlock: true,   // keep model in RAM during demo
-    n_ctx: 512,        // small context — our prompt is <200 tokens
-    n_threads: 4,      // safe default for most Android/iOS devices
-  });
-
-  // Attach to bridge so nativeSlm.ts can call it transparently
-  (globalThis as MaybeGlobalWithBridge).__CITY_WALLET_NATIVE_SLM__ = {
-    infer: async (prompt: string): Promise<string> => {
-      if (!_ctx) throw new Error("Llama context not initialised.");
-      const result = await _ctx.completion({
-        prompt,
-        n_predict: 120,      // enough for our JSON output
-        temperature: 0.3,    // low = more deterministic JSON
-        stop: ["\n\n", "```"], // stop before the model rambles
+  /**
+   * Initialize the Llama runner by loading the model.
+   */
+  async initialize(): Promise<void> {
+    console.log('Loading Llama model from:', this.modelPath);
+    
+    try {
+      const model = await loadLlamaModel({
+        model: this.modelPath,
       });
+      
+      this.context = await model.createContext({
+        n_ctx: 2048,
+        n_threads: 4,
+        n_gpu_layers: 0, // CPU only for now
+      });
+      
+      console.log('Llama model loaded successfully');
+    } catch (error) {
+      console.error('Failed to load Llama model:', error);
+      throw new Error(`Failed to load native SLM: ${error}`);
+    }
+  }
+
+  /**
+   * Run inference on the model.
+   */
+  async infer(prompt: string): Promise<string> {
+    if (!this.context) {
+      throw new Error('Native SLM not initialized. Call initialize() first.');
+    }
+
+    try {
+      const result = await this.context.inference({
+        prompt,
+        n_predict: 256,
+        temperature: 0.7,
+        top_k: 40,
+        top_p: 0.9,
+        repeat_penalty: 1.1,
+        stop: ['\n\n', '```'],
+      });
+      
       return result.text;
-    },
-  };
+    } catch (error) {
+      console.error('Inference failed:', error);
+      throw new Error(`Native SLM inference failed: ${error}`);
+    }
+  }
+
+  /**
+   * Clean up resources.
+   */
+  async destroy(): Promise<void> {
+    if (this.context) {
+      this.context = null;
+    }
+  }
+}
+
+// Global instance for native SLM bridge
+let globalRunner: LlamaRunner | null = null;
+
+/**
+ * Initialize the global native SLM runner.
+ */
+export async function initializeGlobalRunner(): Promise<void> {
+  if (globalRunner) {
+    return; // Already initialized
+  }
+
+  try {
+    const modelPath = await getModelPath();
+    globalRunner = new LlamaRunner(modelPath);
+    await globalRunner.initialize();
+    
+    // Register on globalThis for nativeSlm.ts to access
+    (globalThis as any).__CITY_WALLET_NATIVE_SLM__ = {
+      infer: async (prompt: string) => {
+        if (!globalRunner) {
+          throw new Error('Native SLM not initialized');
+        }
+        return await globalRunner.infer(prompt);
+      }
+    };
+    
+    console.log('Native SLM bridge registered successfully');
+  } catch (error) {
+    console.error('Failed to initialize native SLM:', error);
+    throw error;
+  }
 }
 
 /**
- * Release model from memory (call on app background/unmount if needed).
+ * Get the global runner instance.
  */
-export async function releaseLlamaRunner(): Promise<void> {
-  if (_ctx) {
-    await _ctx.release();
-    _ctx = null;
-    delete (globalThis as MaybeGlobalWithBridge).__CITY_WALLET_NATIVE_SLM__;
-  }
+export function getGlobalRunner(): LlamaRunner | null {
+  return globalRunner;
 }

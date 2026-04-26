@@ -3,6 +3,8 @@ import uuid
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+from sqlalchemy.orm import Session
+
 from app.config import get_settings
 from app.models.offer import OfferStatus
 from app.models.redemption import (
@@ -18,6 +20,7 @@ _validation_lock = asyncio.Lock()
 
 
 async def create_token(
+    db: Session,
     offer_id: str,
     merchant_id: str,
     discount_pct: float,
@@ -40,13 +43,13 @@ async def create_token(
         discount_pct=discount_pct,
         discount_eur=discount_eur,
     )
-    return redemption_repository.save_token(token)
+    return redemption_repository.save_token(db, token)
 
 
-async def validate_token(token_id: str, merchant_id: str) -> ValidateTokenResponse:
+async def validate_token(db: Session, token_id: str, merchant_id: str) -> ValidateTokenResponse:
     """Validate and redeem a token (one-time use)."""
     async with _validation_lock:
-        token = redemption_repository.get_token(token_id)
+        token = redemption_repository.get_token(db, token_id)
 
         if not token:
             return _invalid_token_response()
@@ -59,7 +62,7 @@ async def validate_token(token_id: str, merchant_id: str) -> ValidateTokenRespon
 
         if _is_expired(token):
             token.status = TokenStatus.EXPIRED
-            redemption_repository.save_token(token)
+            redemption_repository.save_token(db, token)
             return _invalid_token_response(TokenStatus.EXPIRED)
 
         settings = get_settings()
@@ -67,7 +70,7 @@ async def validate_token(token_id: str, merchant_id: str) -> ValidateTokenRespon
 
         token.status = TokenStatus.REDEEMED
         token.redeemed_at = datetime.now(tz).isoformat()
-        redemption_repository.save_token(token)
+        redemption_repository.save_token(db, token)
 
         record = RedemptionRecord(
             record_id=f"rec-{uuid.uuid4().hex[:8]}",
@@ -77,11 +80,11 @@ async def validate_token(token_id: str, merchant_id: str) -> ValidateTokenRespon
             discount_applied_eur=token.discount_eur,
             redeemed_at=token.redeemed_at,
         )
-        redemption_repository.add_record(record)
+        redemption_repository.add_record(db, record)
 
-        offer = offer_repository.get_offer(token.offer_id)
+        offer = offer_repository.get_offer(db, token.offer_id)
         if offer:
-            offer_repository.set_offer_status(token.offer_id, OfferStatus.REDEEMED)
+            offer_repository.set_offer_status(db, token.offer_id, OfferStatus.REDEEMED)
 
         return ValidateTokenResponse(
             valid=True,
@@ -92,9 +95,9 @@ async def validate_token(token_id: str, merchant_id: str) -> ValidateTokenRespon
         )
 
 
-async def get_merchant_redemptions(merchant_id: str) -> list[RedemptionRecord]:
+async def get_merchant_redemptions(db: Session, merchant_id: str) -> list[RedemptionRecord]:
     """Get all redemption records for a merchant."""
-    return redemption_repository.list_records_for_merchant(merchant_id)
+    return redemption_repository.list_records_for_merchant(db, merchant_id)
 
 
 def _invalid_token_response(

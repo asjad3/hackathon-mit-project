@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -12,7 +12,7 @@ import {
 import { StatusBar } from "expo-status-bar";
 
 import { DEFAULT_GATEWAY_URL, postFinalize } from "./src/api/finalizeClient";
-import { runOnDeviceSlm } from "./src/localModel";
+import { runOnDeviceSlm, initNativeSLM } from "./src/localModel";
 import {
   buildFinalizeRequest,
   buildIntentSummary,
@@ -51,9 +51,29 @@ export default function App() {
   const [finalizeResult, setFinalizeResult] = useState<string | null>(null);
   const [payloadPreview, setPayloadPreview] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [nativeInitStatus, setNativeInitStatus] = useState<string | null>(null);
 
   const coarse = useMemo(() => toCoarseContext(signals), [signals]);
   const intent = useMemo(() => buildIntentSummary(signals), [signals]);
+
+  // Initialize native SLM when selected
+  useEffect(() => {
+    if (slm === "native") {
+      setNativeInitStatus("Initializing native SLM...");
+      initNativeSLM()
+        .then(() => {
+          setNativeInitStatus("Native SLM ready");
+          console.log("Native SLM initialized successfully");
+        })
+        .catch((e) => {
+          setNativeInitStatus(`Failed to initialize: ${e.message}`);
+          console.error("Failed to initialize native SLM:", e);
+          // Only show error in UI, don't set err state to avoid blocking
+        });
+    } else {
+      setNativeInitStatus(null);
+    }
+  }, [slm]);
 
   const runLocal = useCallback(async () => {
     setErr(null);
@@ -135,8 +155,13 @@ export default function App() {
           ))}
         </View>
         <Text style={styles.muted}>
-          mock = heuristics (works everywhere). native = you link llama.cpp / MLC (throws until wired).
+          mock = heuristics (works everywhere). native = Phi-3 Mini via llama.rn (requires model file).
         </Text>
+        {slm === "native" && nativeInitStatus && (
+          <Text style={[styles.muted, { color: nativeInitStatus.startsWith("Failed") ? "#f87171" : "#94a3b8" }]}>
+            {nativeInitStatus}
+          </Text>
+        )}
 
         <Text style={styles.h2}>Merchant cap</Text>
         <TextInput

@@ -46,20 +46,33 @@ function parseNativeOutput(raw: unknown): LocalModelOutput {
 }
 
 /**
- * Placeholder for a real on-device model (e.g. llama.cpp / MLC / CoreML).
- * Wire your native module here, parse JSON to LocalModelOutput.
+ * Run inference using the native on-device model.
+ * Requires the native SLM bridge to be initialized via initializeGlobalRunner().
  */
 export async function runNativeOnDeviceSlm(
   prompt: string
 ): Promise<LocalModelOutput> {
   const bridge = (globalThis as MaybeGlobalWithBridge).__CITY_WALLET_NATIVE_SLM__;
-  if (bridge?.infer) {
+  
+  if (!bridge) {
+    throw new Error(
+      "Native SLM bridge not initialized. Call initNativeSLM() before using native mode."
+    );
+  }
+  
+  if (!bridge.infer) {
+    throw new Error(
+      "Native SLM bridge missing infer method. Ensure __CITY_WALLET_NATIVE_SLM__.infer is defined."
+    );
+  }
+  
+  try {
     const raw = await bridge.infer(prompt);
     return parseNativeOutput(raw);
+  } catch (error) {
+    console.error('Native SLM inference error:', error);
+    throw new Error(`Native SLM inference failed: ${error}`);
   }
-  throw new Error(
-    "Native SLM bridge missing. Attach globalThis.__CITY_WALLET_NATIVE_SLM__.infer(prompt) and return JSON."
-  );
 }
 
 export function buildPromptFromSignals(s: {

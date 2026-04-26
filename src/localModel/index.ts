@@ -1,8 +1,11 @@
 import type { DeviceSignals, LocalModelOutput, SlmBackend } from "../types";
 import { runMockOnDeviceSlm } from "./mockSlm";
 import { buildPromptFromSignals, runNativeOnDeviceSlm } from "./nativeSlm";
+import { initializeGlobalRunner, checkModelExists } from "./llamaRunner";
 
-export { runMockOnDeviceSlm, buildPromptFromSignals, runNativeOnDeviceSlm };
+export { runMockOnDeviceSlm, buildPromptFromSignals, runNativeOnDeviceSlm, initializeGlobalRunner };
+
+let nativeInitialized = false;
 
 function locationCellHint(loc: { lat: number; lng: number; radius_m: number }): string {
   const g = 0.01;
@@ -10,7 +13,28 @@ function locationCellHint(loc: { lat: number; lng: number; radius_m: number }): 
 }
 
 /**
- * Main entry: run the on-device model path (mock or future native).
+ * Initialize the native SLM (must be called before using native mode).
+ * This is asynchronous and should be called on app startup.
+ */
+export async function initNativeSLM(): Promise<void> {
+  if (nativeInitialized) {
+    return;
+  }
+  
+  const hasModel = await checkModelExists();
+  if (!hasModel) {
+    throw new Error(
+      'Native SLM model not found. Please ensure Phi-3-mini-4k-instruct-Q4_K_M.gguf ' +
+      'is placed in assets/models/ directory.'
+    );
+  }
+  
+  await initializeGlobalRunner();
+  nativeInitialized = true;
+}
+
+/**
+ * Main entry: run the on-device model path (mock or native).
  */
 export async function runOnDeviceSlm(
   signals: DeviceSignals,
@@ -20,6 +44,7 @@ export async function runOnDeviceSlm(
   if (backend === "mock") {
     return runMockOnDeviceSlm(signals, maxDiscount);
   }
+  
   const prompt = buildPromptFromSignals({
     merchant_name: signals.merchant_name,
     time_bucket: signals.time_bucket,
@@ -31,13 +56,16 @@ export async function runOnDeviceSlm(
     preference_hints: signals.preference_hints,
     locationCellHint: locationCellHint(signals.location),
   });
+  
   try {
     return await runNativeOnDeviceSlm(prompt);
   } catch (error) {
-    // Keep demos stable when the native runtime is not linked yet.
+    // Fail loudly if strict mode is enabled
     if (process.env.EXPO_PUBLIC_STRICT_NATIVE_SLM === "1") {
       throw error;
     }
+    // Otherwise fall back to mock mode
+    console.warn('Native SLM failed, falling back to mock mode:', error);
     return runMockOnDeviceSlm(signals, maxDiscount);
   }
 }

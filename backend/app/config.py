@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     default_timezone: str = "Europe/Berlin"
     osm_user_agent: str = "city-wallet-hackathon/0.1"
 
+    # Database configuration
+    database_url: str = "sqlite:///./city_wallet.db"
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",
@@ -30,6 +33,11 @@ class Settings(BaseSettings):
             for origin in self.cors_allowed_origins.split(",")
             if origin.strip()
         ]
+
+    @property
+    def sqlalchemy_database_url(self) -> str:
+        """Get SQLAlchemy database URL."""
+        return self.database_url
 
 
 @lru_cache

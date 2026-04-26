@@ -1,6 +1,8 @@
-from fastapi import Header, HTTPException, status
+from fastapi import Header, HTTPException, status, Depends
+from sqlalchemy.orm import Session
 
 from app.config import get_settings
+from app.database.db import get_db
 
 
 async def require_api_key(x_api_key: str | None = Header(default=None)) -> None:
@@ -14,3 +16,8 @@ async def require_api_key(x_api_key: str | None = Header(default=None)) -> None:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or missing API key",
         )
+
+
+def get_db_session() -> Session:
+    """Dependency for FastAPI routers to get database session."""
+    return next(get_db())

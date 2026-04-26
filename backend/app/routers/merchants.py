@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
-from app.dependencies import require_api_key
+from app.dependencies import require_api_key, get_db_session
 from app.models.merchant import Merchant, MerchantRules, MerchantDashboard
 from app.models.offer import OfferStatus
 from app.repositories import merchant_repository, offer_repository, redemption_repository
@@ -9,21 +10,21 @@ router = APIRouter(prefix="/api/merchants", tags=["merchants"])
 
 
 @router.get("", response_model=list[Merchant])
-async def list_merchants():
-    return merchant_repository.list_merchants()
+async def list_merchants(db: Session = Depends(get_db_session)):
+    return merchant_repository.list_merchants(db)
 
 
 @router.get("/{merchant_id}", response_model=Merchant)
-async def get_merchant(merchant_id: str):
-    merchant = merchant_repository.get_merchant(merchant_id)
+async def get_merchant(merchant_id: str, db: Session = Depends(get_db_session)):
+    merchant = merchant_repository.get_merchant(db, merchant_id)
     if not merchant:
         raise HTTPException(status_code=404, detail="Merchant not found")
     return merchant
 
 
 @router.get("/{merchant_id}/rules", response_model=MerchantRules)
-async def get_merchant_rules(merchant_id: str):
-    merchant = merchant_repository.get_merchant(merchant_id)
+async def get_merchant_rules(merchant_id: str, db: Session = Depends(get_db_session)):
+    merchant = merchant_repository.get_merchant(db, merchant_id)
     if not merchant:
         raise HTTPException(status_code=404, detail="Merchant not found")
     return merchant.rules
@@ -34,22 +35,24 @@ async def get_merchant_rules(merchant_id: str):
     response_model=Merchant,
     dependencies=[Depends(require_api_key)],
 )
-async def update_merchant_rules(merchant_id: str, rules: MerchantRules):
-    merchant = merchant_repository.update_merchant_rules(merchant_id, rules)
+async def update_merchant_rules(
+    merchant_id: str, rules: MerchantRules, db: Session = Depends(get_db_session)
+):
+    merchant = merchant_repository.update_merchant_rules(db, merchant_id, rules)
     if not merchant:
         raise HTTPException(status_code=404, detail="Merchant not found")
     return merchant
 
 
 @router.get("/{merchant_id}/dashboard", response_model=MerchantDashboard)
-async def get_merchant_dashboard(merchant_id: str):
-    merchant = merchant_repository.get_merchant(merchant_id)
+async def get_merchant_dashboard(merchant_id: str, db: Session = Depends(get_db_session)):
+    merchant = merchant_repository.get_merchant(db, merchant_id)
     if not merchant:
         raise HTTPException(status_code=404, detail="Merchant not found")
 
     merchant_offers = [
         offer
-        for offer in offer_repository.list_offers()
+        for offer in offer_repository.list_offers(db)
         if offer.merchant_id == merchant_id
     ]
     accepted = [
@@ -57,7 +60,7 @@ async def get_merchant_dashboard(merchant_id: str):
         for offer in merchant_offers
         if offer.status in (OfferStatus.ACCEPTED, OfferStatus.REDEEMED)
     ]
-    records = redemption_repository.list_records_for_merchant(merchant_id)
+    records = redemption_repository.list_records_for_merchant(db, merchant_id)
     total_offers = len(merchant_offers)
     total_accepted = len(accepted)
     total_redeemed = len(records)

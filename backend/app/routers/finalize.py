@@ -3,12 +3,14 @@ from datetime import datetime, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.models.finalize import FinalizeRequest, FinalizeResponse
 from app.models.offer import GeneratedOffer, OfferVisuals
 from app.repositories import merchant_repository, offer_repository
+from app.dependencies import get_db_session
 
 router = APIRouter(prefix="/v1/offers", tags=["mobile-finalize"])
 
@@ -26,10 +28,10 @@ SENSITIVE_KEYS = {
 
 
 @router.post("/finalize", response_model=FinalizeResponse)
-async def finalize_offer(req: FinalizeRequest):
+async def finalize_offer(req: FinalizeRequest, db: Session = Depends(get_db_session)):
     _reject_sensitive_keys(req.model_dump(mode="json"))
 
-    merchant = merchant_repository.get_merchant(req.merchant_id)
+    merchant = merchant_repository.get_merchant(db, req.merchant_id)
     if not merchant:
         raise HTTPException(status_code=404, detail="Merchant not found")
     if not merchant.active:
@@ -67,7 +69,7 @@ async def finalize_offer(req: FinalizeRequest):
         created_at=now.isoformat(),
         expires_at=expires_at.isoformat(),
     )
-    offer_repository.save_offer(offer)
+    offer_repository.save_offer(db, offer)
 
     return FinalizeResponse(
         trace_id=trace_id,
