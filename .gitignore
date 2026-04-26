@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 .venv/
 venv/
 backend/venv/
@@ -5,3 +6,21 @@ __pycache__/
 *.py[cod]
 *.pyd
 .env
+=======
+node_modules/
+.expo/
+dist/
+npm-debug.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+.DS_Store
+
+# Model files — too large for Git, download manually (see README)
+assets/models/
+*.gguf
+>>>>>>> origin/section-02-local-slm
