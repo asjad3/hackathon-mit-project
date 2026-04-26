@@ -10,9 +10,14 @@
     "rules": {
       "max_discount_pct": 20,
       "goal": "fill_quiet_hours",
-      "quiet_hours": ["14:00-17:00"],
+      "quiet_hours": [
+        "14:00-17:00"
+      ],
       "budget_daily_eur": 50,
-      "product_categories": ["coffee", "pastries"]
+      "product_categories": [
+        "coffee",
+        "pastries"
+      ]
     }
   },
   {
@@ -26,9 +31,15 @@
     "rules": {
       "max_discount_pct": 15,
       "goal": "increase_lunch_traffic",
-      "quiet_hours": ["14:00-16:00"],
+      "quiet_hours": [
+        "14:00-16:00"
+      ],
       "budget_daily_eur": 80,
-      "product_categories": ["pizza", "pasta", "drinks"]
+      "product_categories": [
+        "pizza",
+        "pasta",
+        "drinks"
+      ]
     }
   },
   {
@@ -44,7 +55,251 @@
       "goal": "rainy_day_traffic",
       "quiet_hours": [],
       "budget_daily_eur": 30,
-      "product_categories": ["books", "stationery"]
+      "product_categories": [
+        "books",
+        "stationery"
+      ]
+    }
+  },
+  {
+    "merchant_id": "pk-cafe-f7",
+    "name": "Chai & Co. F-7",
+    "category": "cafe",
+    "address": "F-7 Markaz, Islamabad",
+    "lat": 33.722,
+    "lng": 73.053,
+    "zone_id": "zone-islamabad",
+    "rules": {
+      "max_discount_pct": 18,
+      "goal": "fill_quiet_hours",
+      "quiet_hours": [
+        "14:00-17:00"
+      ],
+      "budget_daily_eur": 45,
+      "product_categories": [
+        "chai",
+        "snacks"
+      ]
+    }
+  },
+  {
+    "merchant_id": "pk-biryani-isb",
+    "name": "Masala Base Kitchen",
+    "category": "restaurant",
+    "address": "Jinnah Super, Islamabad",
+    "lat": 33.708,
+    "lng": 73.049,
+    "zone_id": "zone-islamabad",
+    "rules": {
+      "max_discount_pct": 15,
+      "goal": "increase_lunch_traffic",
+      "quiet_hours": [
+        "14:00-16:00"
+      ],
+      "budget_daily_eur": 90,
+      "product_categories": [
+        "biryani",
+        "karahi",
+        "drinks"
+      ]
+    }
+  },
+  {
+    "merchant_id": "pk-books-isb",
+    "name": "Kitab Ghar",
+    "category": "retail",
+    "address": "Blue Area, Islamabad",
+    "lat": 33.715,
+    "lng": 73.061,
+    "zone_id": "zone-islamabad",
+    "rules": {
+      "max_discount_pct": 12,
+      "goal": "weekend_traffic",
+      "quiet_hours": [],
+      "budget_daily_eur": 35,
+      "product_categories": [
+        "books",
+        "stationery"
+      ]
+    }
+  },
+  {
+    "merchant_id": "pk-cafe-gulberg",
+    "name": "Gulberg Roasters",
+    "category": "cafe",
+    "address": "Main Boulevard, Gulberg III, Lahore",
+    "lat": 31.512,
+    "lng": 74.351,
+    "zone_id": "zone-lahore",
+    "rules": {
+      "max_discount_pct": 20,
+      "goal": "fill_quiet_hours",
+      "quiet_hours": [
+        "15:00-18:00"
+      ],
+      "budget_daily_eur": 55,
+      "product_categories": [
+        "coffee",
+        "desserts"
+      ]
+    }
+  },
+  {
+    "merchant_id": "pk-nihari-lhr",
+    "name": "Walled City Nihari House",
+    "category": "restaurant",
+    "address": "Near Delhi Gate, Lahore",
+    "lat": 31.588,
+    "lng": 74.31,
+    "zone_id": "zone-lahore",
+    "rules": {
+      "max_discount_pct": 12,
+      "goal": "breakfast_push",
+      "quiet_hours": [],
+      "budget_daily_eur": 70,
+      "product_categories": [
+        "nihari",
+        "naan",
+        "lassi"
+      ]
+    }
+  },
+  {
+    "merchant_id": "pk-sweets-lhr",
+    "name": "Jalebi Junction",
+    "category": "retail",
+    "address": "Anarkali Bazaar, Lahore",
+    "lat": 31.568,
+    "lng": 74.308,
+    "zone_id": "zone-lahore",
+    "rules": {
+      "max_discount_pct": 10,
+      "goal": "evening_snacks",
+      "quiet_hours": [],
+      "budget_daily_eur": 40,
+      "product_categories": [
+        "mithai",
+        "jalebi",
+        "drinks"
+      ]
+    }
+  },
+  {
+    "merchant_id": "pk-cafe-clifton",
+    "name": "Clifton Coffee House",
+    "category": "cafe",
+    "address": "Block 5, Clifton, Karachi",
+    "lat": 24.813,
+    "lng": 67.03,
+    "zone_id": "zone-karachi",
+    "rules": {
+      "max_discount_pct": 18,
+      "goal": "fill_quiet_hours",
+      "quiet_hours": [
+        "13:00-16:00"
+      ],
+      "budget_daily_eur": 50,
+      "product_categories": [
+        "coffee",
+        "sandwiches"
+      ]
+    }
+  },
+  {
+    "merchant_id": "pk-bbq-khi",
+    "name": "Saddar BBQ & Grill",
+    "category": "restaurant",
+    "address": "Preedy Street, Saddar, Karachi",
+    "lat": 24.857,
+    "lng": 67.029,
+    "zone_id": "zone-karachi",
+    "rules": {
+      "max_discount_pct": 15,
+      "goal": "dinner_rush",
+      "quiet_hours": [],
+      "budget_daily_eur": 95,
+      "product_categories": [
+        "bbq",
+        "paratha",
+        "drinks"
+      ]
+    }
+  },
+  {
+    "merchant_id": "pk-bakery-khi",
+    "name": "Burns Road Bakery",
+    "category": "retail",
+    "address": "Burns Road, Karachi",
+    "lat": 24.851,
+    "lng": 67.009,
+    "zone_id": "zone-karachi",
+    "rules": {
+      "max_discount_pct": 10,
+      "goal": "morning_rush",
+      "quiet_hours": [],
+      "budget_daily_eur": 38,
+      "product_categories": [
+        "rusk",
+        "cakes",
+        "tea"
+      ]
+    }
+  },
+  {
+    "merchant_id": "pk-sohan-multan",
+    "name": "Multan Sohan Halwa House",
+    "category": "retail",
+    "address": "Ghanta Ghar, Multan",
+    "lat": 30.198,
+    "lng": 71.471,
+    "zone_id": "zone-multan",
+    "rules": {
+      "max_discount_pct": 12,
+      "goal": "tourist_traffic",
+      "quiet_hours": [],
+      "budget_daily_eur": 42,
+      "product_categories": [
+        "sohan_halwa",
+        "mithai"
+      ]
+    }
+  },
+  {
+    "merchant_id": "pk-paratha-multan",
+    "name": "Saraiki Paratha Shop",
+    "category": "restaurant",
+    "address": "Abdali Road, Multan",
+    "lat": 30.162,
+    "lng": 71.518,
+    "zone_id": "zone-multan",
+    "rules": {
+      "max_discount_pct": 14,
+      "goal": "breakfast_push",
+      "quiet_hours": [],
+      "budget_daily_eur": 60,
+      "product_categories": [
+        "paratha",
+        "lassi"
+      ]
+    }
+  },
+  {
+    "merchant_id": "pk-fabric-multan",
+    "name": "Multani Khaddar Studio",
+    "category": "retail",
+    "address": "Hussain Agahi Bazaar, Multan",
+    "lat": 30.15,
+    "lng": 71.53,
+    "zone_id": "zone-multan",
+    "rules": {
+      "max_discount_pct": 10,
+      "goal": "weekend_traffic",
+      "quiet_hours": [],
+      "budget_daily_eur": 33,
+      "product_categories": [
+        "fabric",
+        "ajrak"
+      ]
     }
   }
 ]

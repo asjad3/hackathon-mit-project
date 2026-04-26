@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from app.config import get_settings
-from app.repositories import redemption_repository
+from app.repositories import merchant_repository, redemption_repository
 from app.services import redemption as redemption_service
 
 
@@ -201,10 +201,12 @@ def test_accept_validate_history_and_dashboard(client):
     token_response = client.post(f"/api/redemption/accept/{offer['offer_id']}")
     assert token_response.status_code == 200
     token = token_response.json()
-    expected_eur = round(
-        offer["discount_pct"] * 20 / 100, 2
+    chosen = merchant_repository.get_merchant(db_session, offer["merchant_id"])
+    min_eur = chosen.rules.min_order_eur if chosen else 0.0
+    expected_discount = (
+        round(min_eur * offer["discount_pct"] / 100, 2) if min_eur else 0.0
     )
-    assert token["discount_eur"] == expected_eur
+    assert token["discount_eur"] == expected_discount
     assert len(token["token_id"]) > len("tok-")
 
     validate_response = client.post(
@@ -227,7 +229,7 @@ def test_accept_validate_history_and_dashboard(client):
         params={"merchant_id": offer["merchant_id"]},
     )
     assert history.status_code == 200
-    assert history.json()[0]["discount_applied_eur"] == expected_eur
+    assert history.json()[0]["discount_applied_eur"] == expected_discount
 
     dashboard = client.get(f"/api/merchants/{offer['merchant_id']}/dashboard")
     assert dashboard.status_code == 200

@@ -5,7 +5,11 @@
     "lat": 48.1371,
     "lng": 11.5754,
     "radius_m": 800,
-    "merchant_ids": ["cafe-luna", "pizza-roma", "bookstore-page1"]
+    "merchant_ids": [
+      "cafe-luna",
+      "pizza-roma",
+      "bookstore-page1"
+    ]
   },
   {
     "zone_id": "zone-schwabing",
@@ -14,5 +18,53 @@
     "lng": 11.5860,
     "radius_m": 1000,
     "merchant_ids": []
+  },
+  {
+    "zone_id": "zone-islamabad",
+    "name": "Islamabad",
+    "lat": 33.71,
+    "lng": 73.055,
+    "radius_m": 12000,
+    "merchant_ids": [
+      "pk-cafe-f7",
+      "pk-biryani-isb",
+      "pk-books-isb"
+    ]
+  },
+  {
+    "zone_id": "zone-lahore",
+    "name": "Lahore",
+    "lat": 31.5204,
+    "lng": 74.3587,
+    "radius_m": 15000,
+    "merchant_ids": [
+      "pk-cafe-gulberg",
+      "pk-nihari-lhr",
+      "pk-sweets-lhr"
+    ]
+  },
+  {
+    "zone_id": "zone-karachi",
+    "name": "Karachi",
+    "lat": 24.8607,
+    "lng": 67.0011,
+    "radius_m": 20000,
+    "merchant_ids": [
+      "pk-cafe-clifton",
+      "pk-bbq-khi",
+      "pk-bakery-khi"
+    ]
+  },
+  {
+    "zone_id": "zone-multan",
+    "name": "Multan",
+    "lat": 30.1575,
+    "lng": 71.5249,
+    "radius_m": 8000,
+    "merchant_ids": [
+      "pk-sohan-multan",
+      "pk-paratha-multan",
+      "pk-fabric-multan"
+    ]
   }
 ]

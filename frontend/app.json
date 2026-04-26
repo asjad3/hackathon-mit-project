@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "City Wallet",
+    "slug": "city-wallet",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "scheme": "citywallet",
+    "newArchEnabled": false,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.citywallet.mvp",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "City Wallet uses your location to find nearby offers and merchants."
+      }
+    },
+    "android": {
+      "package": "com.citywallet.mvp",
+      "adaptiveIcon": {
+        "backgroundColor": "#0a0a0a"
+      },
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "splash": {
+      "backgroundColor": "#0a0a0a",
+      "resizeMode": "contain"
+    },
+    "backgroundColor": "#0a0a0a",
+    "plugins": [
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "City Wallet uses your location to find nearby offers."
+        }
+      ]
+    ]
+  }
+}
