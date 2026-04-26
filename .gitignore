@@ -5,4 +5,19 @@ __pycache__/
 *.py[cod]
 *.pyd
 .env
-backend/app/__pycache__
+node_modules/
+.expo/
+dist/
+npm-debug.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+.DS_Store
+
+# Model files — too large for Git, download manually (see README)
+assets/models/
+*.gguf
