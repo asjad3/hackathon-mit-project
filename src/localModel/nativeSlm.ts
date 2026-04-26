@@ -13,12 +13,35 @@ function clampInt(value: number, min: number, max: number): number {
 }
 
 function pickJsonObjectText(raw: string): string {
-  const start = raw.indexOf("{");
-  const end = raw.lastIndexOf("}");
-  if (start === -1 || end === -1 || end <= start) {
-    throw new Error("Native SLM output did not include a JSON object.");
+  // Strip control characters and non-printable chars except standard whitespace
+  const cleaned = raw.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, "");
+  
+  // Find the first { and try to find its matching }
+  const start = cleaned.indexOf("{");
+  if (start === -1) {
+    throw new Error("Native SLM output did not include a JSON object. Raw: " + raw.slice(0, 200));
   }
-  return raw.slice(start, end + 1);
+  
+  // Walk to find balanced braces
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  for (let i = start; i < cleaned.length; i++) {
+    const ch = cleaned[i];
+    if (escape) { escape = false; continue; }
+    if (ch === "\\" && inString) { escape = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === "{") depth++;
+    if (ch === "}") { depth--; if (depth === 0) return cleaned.slice(start, i + 1); }
+  }
+  
+  // Fallback: just take from first { to last }
+  const end = cleaned.lastIndexOf("}");
+  if (end > start) {
+    return cleaned.slice(start, end + 1);
+  }
+  throw new Error("Native SLM output did not include a complete JSON object. Raw: " + raw.slice(0, 200));
 }
 
 function parseNativeOutput(raw: unknown): LocalModelOutput {
@@ -68,10 +91,21 @@ export async function runNativeOnDeviceSlm(
   
   try {
     const raw = await bridge.infer(prompt);
+    console.log('[NativeSlm] Raw model output:', typeof raw === 'string' ? raw.slice(0, 300) : JSON.stringify(raw));
     return parseNativeOutput(raw);
   } catch (error) {
-    console.error('Native SLM inference error:', error);
-    throw new Error(`Native SLM inference failed: ${error}`);
+    console.warn('[NativeSlm] First attempt failed, retrying...', error);
+    // Retry once — small models sometimes need a second pass
+    try {
+      const raw2 = await bridge.infer(prompt + '\n{');
+      console.log('[NativeSlm] Retry raw output:', typeof raw2 === 'string' ? raw2.slice(0, 300) : JSON.stringify(raw2));
+      // Prepend the { we added to the prompt in case model continued from it
+      const text = typeof raw2 === 'string' ? '{' + raw2 : raw2;
+      return parseNativeOutput(text);
+    } catch (retryError) {
+      console.error('Native SLM inference error (after retry):', retryError);
+      throw new Error(`Native SLM inference failed: ${error}`);
+    }
   }
 }
 

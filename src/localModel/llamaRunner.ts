@@ -1,6 +1,15 @@
 import { initLlama, LlamaContext } from "llama.rn";
 import { getModelPath, checkModelExists as checkModelFile } from "./modelConfig";
 
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms / 1000}s`)), ms)
+    ),
+  ]);
+}
+
 // Tuned for low-end Android (~2-3 GB usable RAM).
 // - n_ctx kept small: prompt is < 200 tokens and we only need ~160 out.
 // - n_gpu_layers=0: CPU-only is the safest baseline across Android GPUs.
@@ -40,9 +49,10 @@ export class LlamaRunner {
 
   async initialize(): Promise<void> {
     if (this.context) return;
+
     console.log("[LlamaRunner] Loading model from:", this.modelPath);
     try {
-      this.context = await initLlama(
+      const llamaPromise = initLlama(
         {
           model: this.modelPath,
           ...CONTEXT_PARAMS,
@@ -53,6 +63,8 @@ export class LlamaRunner {
           }
         }
       );
+      // 120s timeout — model loading is slow on low-end devices but shouldn't take forever
+      this.context = await withTimeout(llamaPromise, 120_000, "Model loading");
       console.log("[LlamaRunner] Model loaded.");
     } catch (error) {
       console.error("[LlamaRunner] Failed to load model:", error);
@@ -61,15 +73,26 @@ export class LlamaRunner {
     }
   }
 
+  private wrapChatML(prompt: string): string {
+    return (
+      "<|im_start|>system\nYou are a JSON-only assistant. Output ONLY valid JSON with no extra text.<|im_end|>\n" +
+      "<|im_start|>user\n" + prompt + "<|im_end|>\n" +
+      "<|im_start|>assistant\n"
+    );
+  }
+
   async infer(prompt: string): Promise<string> {
     if (!this.context) {
       throw new Error("Native SLM not initialized. Call initialize() first.");
     }
     try {
+      const chatPrompt = this.wrapChatML(prompt);
+      console.log("[LlamaRunner] Prompt length:", chatPrompt.length, "chars");
       const result = await this.context.completion({
-        prompt,
+        prompt: chatPrompt,
         ...COMPLETION_PARAMS,
       });
+      console.log("[LlamaRunner] Raw output:", (result.text ?? "").slice(0, 300));
       return result.text ?? "";
     } catch (error) {
       console.error("[LlamaRunner] Inference failed:", error);

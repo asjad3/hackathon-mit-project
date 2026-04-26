@@ -83,6 +83,7 @@ export default function App() {
     try {
       const cap = Math.min(80, Math.max(1, parseInt(maxDiscount, 10) || 20));
       const out = await runOnDeviceSlm(signals, cap, slm);
+      console.log("[App] SLM result received, updating UI:", JSON.stringify(out));
       setLocalOut(out);
     } catch (e) {
       setLocalOut(null);
@@ -175,9 +176,11 @@ export default function App() {
         <Text style={styles.json}>{JSON.stringify(coarse, null, 2)}</Text>
         <Text style={styles.muted}>intent_summary: {intent}</Text>
 
-        <Pressable style={styles.btn} onPress={runLocal} disabled={busy}>
+        <Pressable style={[styles.btn, slm === "native" && nativeInitStatus !== "Native SLM ready" && styles.btnDisabled]} onPress={runLocal} disabled={busy || (slm === "native" && nativeInitStatus !== "Native SLM ready")}>
           {busy ? (
             <ActivityIndicator color="#fff" />
+          ) : slm === "native" && nativeInitStatus !== "Native SLM ready" ? (
+            <Text style={styles.btnText}>⏳ Loading native model…</Text>
           ) : (
             <Text style={styles.btnText}>1 — Run on-device SLM</Text>
           )}
@@ -264,5 +267,6 @@ const styles = StyleSheet.create({
     borderColor: "#1f2937",
   },
   json: { color: "#e2e8f0", fontFamily: "monospace", fontSize: 11, lineHeight: 16 },
+  btnDisabled: { backgroundColor: "#374151", opacity: 0.7 },
   err: { color: "#f87171", marginTop: 12, fontSize: 13 },
 });

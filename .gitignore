@@ -13,6 +13,7 @@ npm-debug.*
 *.p8
 *.p12
 *.key
+
 *.mobileprovision
 *.orig.*
 web-build/
@@ -21,3 +22,11 @@ web-build/
 # Model files — too large for Git, download manually (see README)
 assets/models/
 *.gguf
+
+# Expo prebuild output (regenerated via `npx expo prebuild`)
+android/
+ios/
+
+# Logs
+*.log
+backend/uvicorn.log
