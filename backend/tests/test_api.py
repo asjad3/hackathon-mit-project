@@ -11,6 +11,34 @@ from app.services import redemption as redemption_service
 client = TestClient(app, raise_server_exceptions=False)
 
 
+def _finalize_payload(**overrides):
+    payload = {
+        "session_id": "sess-test",
+        "client_pseudonym": "demo-user",
+        "merchant_id": "cafe-luna",
+        "intent_summary": "low_slow_browse_interested",
+        "coarse_context": {
+            "time_bucket": "lunch",
+            "weather_bucket": "rainy",
+            "area_bucket": "old_town",
+            "demand_bucket": "low",
+            "event_tags": ["local_fair"],
+        },
+        "local_model_output": {
+            "headline": "Warm up at Cafe Luna",
+            "body": "A cozy coffee break is waiting nearby.",
+            "discount_pct": 12,
+            "validity_minutes": 30,
+        },
+        "gen_ui_draft": {
+            "badge_text": "On-device draft",
+            "color_palette": {"primary": "#4f46e5", "secondary": "#f59e0b"},
+        },
+    }
+    payload.update(overrides)
+    return payload
+
+
 def test_health():
     response = client.get("/health")
 
@@ -57,6 +85,96 @@ def test_offer_generation_returns_404_outside_zone():
     )
 
     assert response.status_code == 404
+
+
+def test_finalize_creates_offer_matching_mobile_contract():
+    response = client.post("/v1/offers/finalize", json=_finalize_payload())
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["trace_id"].startswith("trace-")
+    assert body["offer_id"].startswith("offer-")
+    assert body["headline"] == "Warm up at Cafe Luna"
+    assert body["discount_pct"] == 12
+    assert body["validity_minutes"] == 30
+    assert "valid_until" in body
+    assert body["gen_ui"]["badge_text"] == "On-device draft"
+    assert body["gen_ui"]["policy"]["source"] == "phone_slm_backend_clamped"
+
+    stored = client.get(f"/api/offers/{body['offer_id']}")
+    assert stored.status_code == 200
+    stored_offer = stored.json()
+    assert stored_offer["merchant_id"] == "cafe-luna"
+    assert stored_offer["headline"] == body["headline"]
+
+
+def test_finalize_clamps_discount_to_merchant_rules():
+    payload = _finalize_payload(
+        local_model_output={
+            "headline": "Big coffee deal",
+            "body": "The phone suggested too much discount.",
+            "discount_pct": 99,
+            "validity_minutes": 240,
+        }
+    )
+
+    response = client.post("/v1/offers/finalize", json=payload)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["discount_pct"] == 20
+    assert body["validity_minutes"] == 120
+    assert body["gen_ui"]["policy"]["discount_pct"] == 20
+
+
+def test_finalize_rejects_unknown_or_inactive_merchant():
+    unknown = client.post(
+        "/v1/offers/finalize",
+        json=_finalize_payload(merchant_id="missing-merchant"),
+    )
+    assert unknown.status_code == 404
+
+    from app.repositories import merchant_repository
+
+    merchant = merchant_repository.get_merchant("cafe-luna")
+    merchant.active = False
+
+    inactive = client.post("/v1/offers/finalize", json=_finalize_payload())
+    assert inactive.status_code == 400
+
+
+def test_finalize_rejects_sensitive_fields():
+    response = client.post(
+        "/v1/offers/finalize",
+        json=_finalize_payload(
+            gen_ui_draft={
+                "badge_text": "Bad draft",
+                "color_palette": {"lat": "48.1351"},
+            }
+        ),
+    )
+
+    assert response.status_code == 422
+    assert "Sensitive field" in response.json()["detail"]
+
+
+def test_finalized_offer_can_enter_redemption_flow():
+    finalize = client.post("/v1/offers/finalize", json=_finalize_payload())
+    offer = finalize.json()
+
+    token_response = client.post(f"/api/redemption/accept/{offer['offer_id']}")
+    assert token_response.status_code == 200
+    token = token_response.json()
+    assert token["offer_id"] == offer["offer_id"]
+    assert token["discount_pct"] == offer["discount_pct"]
+
+    validate_response = client.post(
+        "/api/redemption/validate",
+        json={"token_id": token["token_id"], "merchant_id": token["merchant_id"]},
+    )
+    assert validate_response.status_code == 200
+    assert validate_response.json()["valid"] is True
+    assert validate_response.json()["offer_headline"] == offer["headline"]
 
 
 def test_accept_validate_history_and_dashboard():

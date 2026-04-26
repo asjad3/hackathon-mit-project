@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 
-import { postFinalize } from "./src/api/finalizeClient";
+import { DEFAULT_GATEWAY_URL, postFinalize } from "./src/api/finalizeClient";
 import { runOnDeviceSlm } from "./src/localModel";
 import {
   buildFinalizeRequest,
@@ -42,7 +42,7 @@ const defaultSignals = (): DeviceSignals => ({
 });
 
 export default function App() {
-  const [gatewayUrl, setGatewayUrl] = useState("http://10.0.2.2:8000");
+  const [gatewayUrl, setGatewayUrl] = useState(DEFAULT_GATEWAY_URL);
   const [maxDiscount, setMaxDiscount] = useState("20");
   const [slm, setSlm] = useState<SlmBackend>("mock");
   const [signals, setSignals] = useState<DeviceSignals>(defaultSignals);

@@ -1,6 +1,6 @@
 import type { FinalizeRequest } from "../types";
 
-const DEFAULT_GW =
+export const DEFAULT_GATEWAY_URL =
   process.env.EXPO_PUBLIC_GATEWAY_URL || "http://10.0.2.2:8000";
 
 export type FinalizeResponse = {
@@ -21,7 +21,7 @@ export type FinalizeResponse = {
  */
 export async function postFinalize(
   body: FinalizeRequest,
-  baseUrl: string = DEFAULT_GW
+  baseUrl: string = DEFAULT_GATEWAY_URL
 ): Promise<FinalizeResponse> {
   const url = `${baseUrl.replace(/\/$/, "")}/v1/offers/finalize`;
   const r = await fetch(url, {
