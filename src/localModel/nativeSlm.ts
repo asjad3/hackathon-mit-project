@@ -75,14 +75,20 @@ export function buildPromptFromSignals(s: {
   locationCellHint: string;
 }): string {
   return [
-    "You are a local cafe offer assistant. Reply with JSON only:",
-    "{ headline: string (max 6 words), body: string (max 15 words, must mention discount % and minutes),",
-    "discount_pct: number, validity_minutes: number }",
+    "You are a local offer assistant. Output ONLY a JSON object — no explanation, no markdown.",
+    "Schema: { \"headline\": string (max 6 words), \"body\": string (max 15 words, mention discount % and minutes), \"discount_pct\": number, \"validity_minutes\": number }",
+    "",
+    "Example:",
+    "Input: merchant=Cafe Müller, context=lunch, rainy, demand=low, area=old_town, preferences=coffee",
+    "Output: {\"headline\":\"Warm up at Café Müller\",\"body\":\"15% off your coffee — next 20 min, while it's raining.\",\"discount_pct\":15,\"validity_minutes\":20}",
+    "",
+    "Now generate for:",
     `merchant: ${s.merchant_name}`,
     `context: ${s.time_bucket}, ${s.weather_bucket}, demand=${s.demand_bucket}, area=${s.area_bucket}`,
     `events: ${s.event_tags.join(",") || "none"}`,
     `movement: ${s.movement_signature || "unknown"}`,
     `preferences: ${s.preference_hints.join(",") || "none"}`,
     `local_area_hint: ${s.locationCellHint}`,
+    "Output:",
   ].join("\n");
 }
